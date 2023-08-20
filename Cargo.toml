@@ -19,3 +19,5 @@ itertools = "0.10.1"
 directories = "4.0.1"
 configparser = "3.0.0"
 clap = "3.1.0"
+ctrlc = { version = "3.4.0", features = ["termination"] }
+console = "0.15.7"
