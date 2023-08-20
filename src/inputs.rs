@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::{FuzzySelect, Input};
@@ -10,6 +12,7 @@ pub struct Inputs {
 	pub description: String,
 	pub long_description: String,
 	pub breaking_changes: String,
+	pub ticket: String,
 }
 
 pub fn get_inputs(_config: &conf::Config) -> Result<Inputs> {
@@ -61,11 +64,40 @@ pub fn get_inputs(_config: &conf::Config) -> Result<Inputs> {
 		.with_prompt("Breaking change (optional)")
 		.interact_text()
 		.context("Failed to ask for breaking changes")?;
+	let ticket: String = Input::with_theme(&theme)
+		.allow_empty(true)
+		.with_initial_text(parse_branch_info())
+		.with_prompt("Ticket (optional)")
+		.interact_text()
+		.context("Failed to ask for ticket")?;
 	Ok(Inputs {
 		change_type: String::from(change_types[change_type_selection]),
 		scope: "none".to_owned(),
 		description,
 		long_description,
 		breaking_changes,
+		ticket
 	})
 }
+
+pub fn parse_branch_info() -> String {
+	let ticket_regex = regex::Regex::new("([A-Za-z_]{3,}-[0-9]+)").unwrap();
+	let branch = Command::new("git")
+		.args(["symbolic-ref", "--short", "HEAD"])
+		.output();
+	let branch = if let Ok(result) = branch {
+		String::from_utf8(result.stdout).unwrap_or_default()
+	} else {
+		String::new()
+	};
+
+	if !branch.is_empty() {
+		match ticket_regex.find(branch.as_str()) {
+			Some(hit) => String::from(hit.as_str()),
+			None => String::new(),
+		}
+	} else {
+		String::new()
+	}
+}
+

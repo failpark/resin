@@ -77,7 +77,7 @@ fn message(conf: &Config, inputs: &Inputs) -> Result<String> {
 			"!"
 		},
 		inputs.description,
-		parse_branch_info(),
+		inputs.ticket,
 		inputs.long_description,
 		inputs.breaking_changes,
 		if conf.sign { signoff()? } else { String::new() },
@@ -85,27 +85,6 @@ fn message(conf: &Config, inputs: &Inputs) -> Result<String> {
 	.trim()
 	.to_string();
 	Ok(message)
-}
-
-pub fn parse_branch_info() -> String {
-	let ticket_regex = regex::Regex::new("([A-Za-z_]{3,}-[0-9]+)").unwrap();
-	let branch = Command::new("git")
-		.args(["symbolic-ref", "--short", "HEAD"])
-		.output();
-	let branch = if let Ok(result) = branch {
-		String::from_utf8(result.stdout).unwrap_or_default()
-	} else {
-		String::new()
-	};
-
-	if !branch.is_empty() {
-		match ticket_regex.find(branch.as_str()) {
-			Some(hit) => String::from(hit.as_str()),
-			None => String::new(),
-		}
-	} else {
-		String::new()
-	}
 }
 
 /// Create the sign off message based off the user's ~/.gitconfig
@@ -161,6 +140,7 @@ mod tests {
 					description: String::from("add polish language"),
 					long_description: String::from(""),
 					breaking_changes: String::from(""),
+					ticket: String::new(),
 				}
 			)?,
 			String::from("feat: add polish language")
@@ -177,7 +157,8 @@ mod tests {
 					scope: String::from("lang"),
 					description: String::from("add polish language"),
 					long_description: String::from(""),
-					breaking_changes: String::from("")
+					breaking_changes: String::from(""),
+					ticket: String::new(),
 				}
 			)?,
 			String::from("feat(lang): add polish language")
@@ -197,7 +178,8 @@ mod tests {
 						"added this language because it is super cool and we need more languages \
 						 like it."
 					),
-					breaking_changes: String::from("")
+					breaking_changes: String::from(""),
+					ticket: String::new(),
 				}
 			)?,
 			String::from(
@@ -220,7 +202,8 @@ mod tests {
 						"added this language because it is super cool and we need more languages \
 						 like it."
 					),
-					breaking_changes: String::from("This breaks some other languages.")
+					breaking_changes: String::from("This breaks some other languages."),
+					ticket: String::new(),
 				}
 			)?,
 			String::from(
