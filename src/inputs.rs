@@ -51,7 +51,7 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 			};
 			move |input: &String| -> Result<(), String> {
 				let input_len = input.len();
-				if (input_len + max_input_length ) <= 50 || force.as_ref().map_or(false, |old| old == input) {
+				if (input_len) <= max_input_length || force.as_ref().map_or(false, |old| old == input) {
 					Ok(())
 				} else {
 					force = Some(input.clone());
