@@ -1,10 +1,10 @@
-use clap::{Arg, Command};
+use clap::{Arg, Command, crate_authors, crate_version, crate_description, crate_name};
 
 pub fn setup() -> Command<'static> {
-	Command::new("resin")
-		.version("1.5.0")
-		.author("Matt Gleich <email@mattglei.ch>")
-		.about("Superfast CLI interface for the conventional commits commit format")
+	Command::new(crate_name!())
+		.version(crate_version!())
+		.author(crate_authors!("\n"))
+		.about(crate_description!())
 		.arg(
 			Arg::new("all")
 				.help("Run git add . before committing the the changes")
