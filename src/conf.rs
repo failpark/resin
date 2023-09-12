@@ -24,7 +24,7 @@ pub fn read() -> Result<Config> {
 	let fnames = ["resin", "commits", "conventional_commits"];
 	let mut config = Config {
 		scopes: to_string_vec(vec![
-			"none", "lint", "deps", "release", "license", "config", "scripts", "styles",
+			"none", "mod", "theme", "block", "styles", "lint", "release",
 		]),
 		sign: false,
 	};

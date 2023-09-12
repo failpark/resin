@@ -15,7 +15,7 @@ pub struct Inputs {
 	pub ticket: String,
 }
 
-pub fn get_inputs(_config: &conf::Config) -> Result<Inputs> {
+pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 	let theme = ColorfulTheme::default();
 	let change_types = &[
 		"Feat", "Fix", "Docs", "Style", "Refactor", "Perf", "Test", "Build", "CI", "Chore",
@@ -29,24 +29,31 @@ pub fn get_inputs(_config: &conf::Config) -> Result<Inputs> {
 		.interact_opt()
 		.context("Failed to present change type selection to user")?
 		.unwrap_or_else(|| std::process::exit(1));
-	// let scope_selection = FuzzySelect::with_theme(&theme)
-		// .with_prompt("Scope")
-		// .default(0)
-		// .items(&config.scopes)
-		// .interact_opt()
-		// .context("Failed to present scope selection to user")?
-		// .unwrap_or_else(|| std::process::exit(1));
+	let scope_selection = FuzzySelect::with_theme(&theme)
+		.with_prompt("Scope")
+		.default(0)
+		.items(&config.scopes)
+		.interact_opt()
+		.context("Failed to present scope selection to user")?
+		.unwrap_or_else(|| std::process::exit(1));
 	let description: String = Input::with_theme(&theme)
 		.with_prompt("Description")
 		.validate_with({
 			let mut force = None;
+			// type + `: `
+			let change_type_len = String::from(change_types[change_type_selection]).len() + 2;
+			// scope + `()`
+			let scope_len = String::from(config.scopes.get(scope_selection).unwrap()).len() + 2;
+			let max_input_length = if scope_selection != 0 {
+				50 - change_type_len - scope_len
+			} else {
+				50 - change_type_len
+			};
 			move |input: &String| -> Result<(), String> {
-				let change_type_len = String::from(change_types[change_type_selection]).len();
 				let input_len = input.len();
-				if (input_len + change_type_len ) <= 50 || force.as_ref().map_or(false, |old| old == input) {
+				if (input_len + max_input_length ) <= 50 || force.as_ref().map_or(false, |old| old == input) {
 					Ok(())
 				} else {
-					let max_input_length = 48 - change_type_len;
 					force = Some(input.clone());
 					Err(format!("Your can only write {max_input_length} chars and you wrote: {input_len}; type the same value again to force use"))
 				} 
@@ -72,7 +79,7 @@ pub fn get_inputs(_config: &conf::Config) -> Result<Inputs> {
 		.context("Failed to ask for ticket")?;
 	Ok(Inputs {
 		change_type: String::from(change_types[change_type_selection]),
-		scope: "none".to_owned(),
+		scope: config.scopes.get(scope_selection).unwrap().to_owned(),
 		description,
 		long_description,
 		breaking_changes,
