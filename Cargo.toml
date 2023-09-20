@@ -2,8 +2,8 @@
 name = "resin"
 version = "1.6.2"
 description = "Superfast CLI for the conventional commits commit format"
-authors = ["Original: Matt Gleich <email@mattglei.ch>", "Internal: Daniel Matthes <dmatthes@multamedio.de>"]
-repository = "https://github.com/gleich/resin/"
+authors = ["Internal: Daniel Matthes <dmatthes@multamedio.de>", "Original: Matt Gleich <email@mattglei.ch>"]
+repository = "https://gitlab/dmatthes/resin"
 homepage = "https://github.com/gleich/resin/"
 license = "MPL-2.0"
 edition = "2021"
