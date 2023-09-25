@@ -66,11 +66,7 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.with_prompt("Longer description (optional)")
 		.interact_text()
 		.context("Failed to ask for longer description")?;
-	let breaking_changes: String = Input::with_theme(&theme)
-		.allow_empty(true)
-		.with_prompt("Breaking change (optional)")
-		.interact_text()
-		.context("Failed to ask for breaking changes")?;
+	let breaking_changes: String = String::new();
 	let ticket: String = Input::with_theme(&theme)
 		.allow_empty(true)
 		.with_initial_text(parse_branch_info())
