@@ -2,7 +2,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
-use dialoguer::{FuzzySelect, Input};
+use dialoguer::{FuzzySelect, Input, Confirm};
 
 use crate::conf;
 
@@ -61,11 +61,21 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		})
 		.interact_text()
 		.context("Failed to ask for description")?;
-	let long_description: String = Input::with_theme(&theme)
-		.allow_empty(true)
+	let long_description: bool = Confirm::with_theme(&theme)
+		.default(false)
 		.with_prompt("Longer description (optional)")
-		.interact_text()
+		.wait_for_newline(true)
+		.interact()
 		.context("Failed to ask for longer description")?;
+	
+	let long_description = if long_description {
+		let template = include_str!("long_desc.template");
+		edit::edit(template)?
+	} else {
+		String::new()
+	};
+	let long_description = long_description.lines().filter(move |line| !line.starts_with('#')).fold(String::new(), |s, l| s + l + "\n");
+
 	let breaking_changes: String = String::new();
 	let ticket: String = Input::with_theme(&theme)
 		.allow_empty(true)

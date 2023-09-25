@@ -1,0 +1,15 @@
+
+# Beschreibe warum die Änderungen vorgenommen wurden
+# |<--      Versuche pro Zeile max. 72 Zeichen zu verwenden         -->|
+
+# Links zu Tickets, Artikeln oder weiteren Referenzen hinzufügen
+# Beispiel: Behebt JIRA-3311
+
+# --- COMMIT ENDE ---
+# Weitere Hinweise zu einer guten Commit-Message
+#   Beende die Beschreibung nicht mit einem Punkt
+#   Benutze die Nachricht zum Beschreiben von "was" und "warum" (nicht "wie"!)
+#   Nutzen von mehreren Zeilen in der Nachricht mit "-" als Aufzählungszeichen möglich
+# --------------
+# Quelle:
+# - https://chris.beams.io/posts/git-commit/
