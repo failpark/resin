@@ -1,10 +1,6 @@
 <!-- DO NOT REMOVE - contributor_list:data:start:["gleich", "Liberatys"]:end -->
 
-# resin [![crates.io](https://img.shields.io/crates/v/resin.svg)](https://crates.io/crates/resin)
-
-[![lint](https://github.com/gleich/resin/actions/workflows/lint.yml/badge.svg)](https://github.com/gleich/resin/actions/workflows/lint.yml)
-[![build](https://github.com/gleich/resin/actions/workflows/build.yml/badge.svg)](https://github.com/gleich/resin/actions/workflows/build.yml)
-[![test](https://github.com/gleich/resin/actions/workflows/test.yml/badge.svg)](https://github.com/gleich/resin/actions/workflows/test.yml)
+# resin
 
 ⚗️ Superfast CLI for the conventional commits commit format
 
@@ -42,44 +38,13 @@ You can configure resin to have your custom scopes. Below is an example config:
 scopes = ['docker', 'github actions']
 ```
 
-#### ✍️ Sign-off message
-
-You can also have a sign-off message that is based off the contents of your `~/.gitconfig` file:
-
-```toml
-sign = true
-```
-
-This will create a message that will automatically be added to the bottom of your commit message:
-
-```txt
-Signed-off-by: Matt Gleich <git@mattglei.ch>
-```
-
-#### 📁 Location
-
-This file can be stored in `~/.config/resin/config.toml` or on a per-project basis by putting it at the root of the project with the same name. You can see a demo of this [for this project](resin.toml)
-
 ## 🚀 Install
 
-You can install resin using [cargo](https://doc.rust-lang.org/cargo/index.html):
+You can install resin by downloading the deb file from the [release page](https://gitlab/elearning-solutions/resin/-/releases)
+and running:
 
 ```bash
-cargo install resin
+sudo apt install ./resin_<version>_amd64.deb
 ```
 
-## 🙌 Contributing
-
-We would love to have you contribute! Please read the [contributing guide](CONTRIBUTING.md) before submitting a pull request. Thank you in advance!
-
-<!-- prettier-ignore-start -->
-<!-- DO NOT REMOVE - contributor_list:start -->
-## 👥 Contributors
-
-
-- **[@gleich](https://github.com/gleich)**
-
-- **[@Liberatys](https://github.com/Liberatys)**
-
-<!-- DO NOT REMOVE - contributor_list:end -->
-<!-- prettier-ignore-end -->
+and replacing `<version>` with the downloaded release version
