@@ -13,7 +13,7 @@ resin is a CLI (command-line interface) tool that makes it easy to create commit
 This demo will create the following commit message:
 
 ```txt
-feat(config): add crates.io fields
+Chore: version bump
 ```
 
 ## ✨ Features
