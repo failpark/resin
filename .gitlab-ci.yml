@@ -1,0 +1,47 @@
+stages:
+    - build
+    - upload
+    - release
+
+variables:
+    PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/resin/${CI_COMMIT_TAG}"
+
+build:
+    stage: build
+    image: rust:latest
+    script: 
+        - cargo install cargo-deb
+        - cargo deb
+        - mkdir bin
+        - echo "RESIN_DEB=$(ls target/debian/*.deb | xargs -n 1 basename)" >> build.env
+        - source ./build.env
+        - mv target/debian/${RESIN_DEB} bin/
+    cache:
+        paths:
+            - target/release/
+    artifacts:
+        paths:
+            - bin
+        reports:
+            dotenv: build.env
+    rules:
+        - if: $CI_COMMIT_TAG
+
+upload:
+    stage: upload
+    image: curlimages/curl:latest
+    rules:
+        - if: $CI_COMMIT_TAG
+    script:
+        - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file bin/${RESIN_DEB} ${PACKAGE_REGISTRY_URL}/${RESIN_DEB} --cacert "MM-CAII.pem"'
+
+
+release:
+    stage: release
+    image: registry.gitlab.com/gitlab-org/release-cli:latest
+    variables:
+      "SSL_CERT_FILE": "MM-CAII.pem"
+    rules:
+        - if: $CI_COMMIT_TAG
+    script:
+        - 'release-cli create --name "Resin ${CI_COMMIT_TAG}" --tag-name $CI_COMMIT_TAG --assets-link "{\"name\":\"${RESIN_DEB}\", \"url\":\"${PACKAGE_REGISTRY_URL}/${RESIN_DEB}\"}"'
