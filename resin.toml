@@ -1,1 +1,1 @@
-scopes = ['conf', 'type', 'scope', 'git', 'validate']
+scopes = ['conf', 'type', 'scope', 'git', 'validate', 'ci']
