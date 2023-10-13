@@ -1,8 +1,7 @@
+use std::env::current_dir;
 use std::fs;
-use std::path::Path;
 
 use anyhow::Result;
-use directories::UserDirs;
 use itertools::Itertools;
 use serde::Deserialize;
 
@@ -11,46 +10,54 @@ use crate::utils::to_string_vec;
 #[derive(Debug, Deserialize)]
 struct RawTOML {
 	scopes: Option<Vec<String>>,
+	change_types: Option<Vec<String>>,
 	sign: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Config {
 	pub scopes: Vec<String>,
+	pub change_types: Vec<String>,
 	pub sign: bool,
 }
 
 pub fn read() -> Result<Config> {
-	let fnames = ["resin", "commits", "conventional_commits"];
 	let mut config = Config {
 		scopes: to_string_vec(vec![
-			"none", "mod", "theme", "block", "style", "lint", "doc", "release", "dev"
+			"none", "mod", "theme", "block", "style", "lint", "doc", "release", "dev",
+		]),
+		change_types: to_string_vec(vec![
+			"Feat", "Fix", "Docs", "Style", "Refactor", "Perf", "Test", "Build", "CI", "Chore",
+			"Revert",
 		]),
 		sign: false,
 	};
 
-	// Reading global config file for user
-	let raw_global_path = &format!(
-		"{}/.config/resin/config.toml",
-		UserDirs::new().unwrap().home_dir().display()
-	);
-	let global_path = Path::new(&raw_global_path);
-	if global_path.exists() {
-		let content = fs::read_to_string(global_path)?;
-		let raw_data: RawTOML = toml::from_str(&content)?;
-		config.sign = raw_data.sign.unwrap_or_default();
-		config.scopes.extend(raw_data.scopes.unwrap_or_default());
-	};
-
 	// Reading local config file
-	for file_name in fnames {
-		let file_name = format!("{}{}", file_name, ".toml");
-		let path = Path::new(&file_name);
-
+	let file_name = String::from("resin.toml");
+	let current_dir = current_dir()?;
+	let ancestors = current_dir.ancestors();
+	for ancestor in ancestors {
+		let path = ancestor.join(&file_name);
 		if path.exists() {
 			let content = fs::read_to_string(path)?;
 			let raw_data: RawTOML = toml::from_str(&content)?;
-			config.scopes.extend(raw_data.scopes.unwrap_or_default());
+			config.scopes.extend(
+				raw_data
+					.scopes
+					.unwrap_or_default()
+					.iter()
+					.map(|s| s.to_lowercase()),
+			);
+			config
+				.change_types
+				.extend(raw_data.change_types.unwrap_or_default().iter().map(|s| {
+					let mut c = s.chars();
+					match c.next() {
+						None => String::new(),
+						Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+					}
+				}));
 			if raw_data.sign.is_some() {
 				config.sign = raw_data.sign.unwrap();
 			}
@@ -77,16 +84,12 @@ mod tests {
 			read()?,
 			Config {
 				scopes: to_string_vec(vec![
-					"none",
-					"lint",
-					"deps",
-					"release",
-					"license",
-					"config",
-					"scripts",
-					"styles",
-					"docker",
-					"github actions"
+					"none", "mod", "theme", "block", "style", "lint", "doc", "release", "dev",
+					"conf", "type", "scope", "git", "validate", "ci",
+				]),
+				change_types: to_string_vec(vec![
+					"Feat", "Fix", "Docs", "Style", "Refactor", "Perf", "Test", "Build", "CI",
+					"Chore", "Revert", "Breaking",
 				]),
 				sign: false,
 			},

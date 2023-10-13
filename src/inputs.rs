@@ -2,7 +2,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
-use dialoguer::{FuzzySelect, Input, Confirm};
+use dialoguer::{Confirm, FuzzySelect, Input};
 
 use crate::conf;
 
@@ -17,15 +17,11 @@ pub struct Inputs {
 
 pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 	let theme = ColorfulTheme::default();
-	let change_types = &[
-		"Feat", "Fix", "Docs", "Style", "Refactor", "Perf", "Test", "Build", "CI", "Chore",
-		"Revert",
-	];
 
 	let change_type_selection = FuzzySelect::with_theme(&theme)
 		.with_prompt("Type")
 		.default(0)
-		.items(change_types)
+		.items(&config.change_types)
 		.interact_opt()
 		.context("Failed to present change type selection to user")?
 		.unwrap_or_else(|| std::process::exit(1));
@@ -41,7 +37,8 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.validate_with({
 			let mut force = None;
 			// type + `: `
-			let change_type_len = String::from(change_types[change_type_selection]).len() + 2;
+			let change_type_len =
+				String::from(&config.change_types[change_type_selection]).len() + 2;
 			// scope + `()`
 			let scope_len = String::from(config.scopes.get(scope_selection).unwrap()).len() + 2;
 			let max_input_length = if scope_selection != 0 {
@@ -51,12 +48,17 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 			};
 			move |input: &String| -> Result<(), String> {
 				let input_len = input.len();
-				if (input_len) <= max_input_length || force.as_ref().map_or(false, |old| old == input) {
+				if (input_len) <= max_input_length
+					|| force.as_ref().map_or(false, |old| old == input)
+				{
 					Ok(())
 				} else {
 					force = Some(input.clone());
-					Err(format!("Your can only write {max_input_length} chars and you wrote: {input_len}; type the same value again to force use"))
-				} 
+					Err(format!(
+						"Your can only write {max_input_length} chars and you wrote: {input_len}; \
+						 type the same value again to force use"
+					))
+				}
 			}
 		})
 		.interact_text()
@@ -67,14 +69,17 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.wait_for_newline(true)
 		.interact()
 		.context("Failed to ask for longer description")?;
-	
+
 	let long_description = if long_description {
 		let template = include_str!("long_desc.template");
 		edit::edit(template)?
 	} else {
 		String::new()
 	};
-	let long_description = long_description.lines().filter(move |line| !line.starts_with('#')).fold(String::new(), |s, l| s + l + "\n");
+	let long_description = long_description
+		.lines()
+		.filter(move |line| !line.starts_with('#'))
+		.fold(String::new(), |s, l| s + l + "\n");
 
 	let breaking_changes: String = String::new();
 	let ticket: String = Input::with_theme(&theme)
@@ -84,12 +89,12 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.interact_text()
 		.context("Failed to ask for ticket")?;
 	Ok(Inputs {
-		change_type: String::from(change_types[change_type_selection]),
+		change_type: String::from(&config.change_types[change_type_selection]),
 		scope: config.scopes.get(scope_selection).unwrap().to_owned(),
 		description,
 		long_description,
 		breaking_changes,
-		ticket
+		ticket,
 	})
 }
 
@@ -113,4 +118,3 @@ pub fn parse_branch_info() -> String {
 		String::new()
 	}
 }
-

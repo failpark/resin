@@ -1,4 +1,4 @@
-use clap::{Arg, Command, crate_authors, crate_version, crate_description, crate_name};
+use clap::{crate_authors, crate_description, crate_name, crate_version, Arg, Command};
 
 pub fn setup() -> Command<'static> {
 	Command::new(crate_name!())

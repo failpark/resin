@@ -1,1 +1,2 @@
 scopes = ['conf', 'type', 'scope', 'git', 'validate', 'ci']
+change_types = ['breaking']

@@ -5,11 +5,11 @@ mod inputs;
 mod utils;
 
 fn main() {
-
 	ctrlc::set_handler(move || {
 		let term = console::Term::stderr();
 		let _ = term.show_cursor();
-	}).expect("Error setting ctrl+c handler");
+	})
+	.expect("Error setting ctrl+c handler");
 
 	let args = cli::setup().get_matches();
 	let config = conf::read().expect("Failed to read from configuration file");

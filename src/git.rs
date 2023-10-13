@@ -132,6 +132,7 @@ mod tests {
 			message(
 				&Config {
 					scopes: vec![],
+					change_types: vec![],
 					sign: false
 				},
 				&Inputs {
@@ -150,6 +151,7 @@ mod tests {
 			message(
 				&Config {
 					scopes: vec![],
+					change_types: vec![],
 					sign: false
 				},
 				&Inputs {
@@ -168,6 +170,7 @@ mod tests {
 			message(
 				&Config {
 					scopes: vec![],
+					change_types: vec![],
 					sign: false
 				},
 				&Inputs {
@@ -192,6 +195,7 @@ mod tests {
 			message(
 				&Config {
 					scopes: vec![],
+					change_types: vec![],
 					sign: false
 				},
 				&Inputs {
