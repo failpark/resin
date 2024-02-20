@@ -1,6 +1,6 @@
 [package]
 name = "resin"
-version = "1.6.4"
+version = "1.6.5"
 description = "Superfast CLI for the conventional commits commit format"
 authors = ["Internal: Daniel Matthes <dmatthes@multamedio.de>", "Original: Matt Gleich <email@mattglei.ch>"]
 repository = "https://github.com/MM-Learning-Solutions-AG/resin"
