@@ -1,2 +1,10 @@
-scopes = ['conf', 'type', 'scope', 'git', 'validate', 'ci']
+scopes = [
+	'conf',
+	'type',
+	'scope',
+	'git',
+	'validate',
+	'ci',
+	'deps'
+]
 change_types = ['breaking']
