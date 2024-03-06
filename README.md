@@ -40,11 +40,5 @@ scopes = ['docker', 'github actions']
 
 ## 🚀 Install
 
-You can install resin by downloading the deb file from the [release page](https://gitlab/elearning-solutions/resin/-/releases)
-and running:
-
-```bash
-sudo apt install ./resin_<version>_amd64.deb
-```
-
-and replacing `<version>` with the downloaded release version
+You can install resin by downloading the latest version from the [release page](https://github.com/MM-Learning-Solutions-AG/resin/releases)
+and running the provided shell script.
