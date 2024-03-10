@@ -2,7 +2,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
-use dialoguer::{Confirm, FuzzySelect, Input};
+use dialoguer::{BasicHistory, Confirm, FuzzySelect, Input};
 
 use crate::conf;
 
@@ -32,8 +32,12 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.interact_opt()
 		.context("Failed to present scope selection to user")?
 		.unwrap_or_else(|| std::process::exit(1));
+
+	let mut history = BasicHistory::new().max_entries(4).no_duplicates(true);
+
 	let description: String = Input::with_theme(&theme)
 		.with_prompt("Description")
+		.history_with(&mut history)
 		.validate_with({
 			let mut force = None;
 			// type + `: `
