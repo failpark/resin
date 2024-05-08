@@ -17,4 +17,10 @@ pub fn setup() -> Command<'static> {
 				.short('p')
 				.long("push"),
 		)
+		.arg(
+			Arg::new("bump")
+				.help("Bump the version number")
+				.short('b')
+				.long("bump"),
+		)
 }

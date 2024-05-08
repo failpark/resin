@@ -1,8 +1,11 @@
 [package]
 name = "resin"
-version = "1.6.6"
+version = "1.6.7"
 description = "Superfast CLI for the conventional commits commit format"
-authors = ["Internal: Daniel Matthes <dmatthes@multamedio.de>", "Original: Matt Gleich <email@mattglei.ch>"]
+authors = [
+	"Internal: Daniel Matthes <dmatthes@multamedio.de>",
+	"Original: Matt Gleich <email@mattglei.ch>",
+]
 repository = "https://github.com/MM-Learning-Solutions-AG/resin"
 homepage = "https://github.com/MM-Learning-Solutions-AG/resin/"
 license = "MPL-2.0"
@@ -17,7 +20,7 @@ eula = false
 
 [dependencies]
 anyhow = "1.0.80"
-toml = "0.5.11"
+toml = "0.8.10"
 serde = { version = "1.0.197", features = ["derive"] }
 dialoguer = { version = "0.11.0", features = ["fuzzy-select", "history"] }
 colored = "2.1.0"
@@ -44,6 +47,10 @@ ci = ["github"]
 # The installers to generate for each app
 installers = ["shell", "powershell", "msi"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+targets = [
+	"aarch64-apple-darwin",
+	"x86_64-unknown-linux-gnu",
+	"x86_64-pc-windows-msvc",
+]
 # Publish jobs to run in CI
 pr-run-mode = "plan"

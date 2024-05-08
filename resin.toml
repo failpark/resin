@@ -1,4 +1,4 @@
-scopes = [
+scopes.items = [
 	'conf',
 	'type',
 	'scope',
@@ -7,4 +7,4 @@ scopes = [
 	'ci',
 	'deps'
 ]
-change_types = ['breaking']
+change_types.items = ['breaking']

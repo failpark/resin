@@ -6,29 +6,29 @@ use dialoguer::{BasicHistory, Confirm, FuzzySelect, Input};
 
 use crate::conf;
 
-pub struct Inputs {
-	pub change_type: String,
-	pub scope: String,
+pub struct Inputs<'a> {
+	pub change_type: &'a str,
+	pub scope: &'a str,
 	pub description: String,
 	pub long_description: String,
 	pub breaking_changes: String,
 	pub ticket: String,
 }
 
-pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
+pub fn get_inputs<'a>(config: &'a conf::Config) -> Result<Inputs<'a>> {
 	let theme = ColorfulTheme::default();
 
 	let change_type_selection = FuzzySelect::with_theme(&theme)
 		.with_prompt("Type")
 		.default(0)
-		.items(&config.change_types)
+		.items(&config.change_types.items)
 		.interact_opt()
 		.context("Failed to present change type selection to user")?
 		.unwrap_or_else(|| std::process::exit(1));
 	let scope_selection = FuzzySelect::with_theme(&theme)
 		.with_prompt("Scope")
 		.default(0)
-		.items(&config.scopes)
+		.items(&config.scopes.items)
 		.interact_opt()
 		.context("Failed to present scope selection to user")?
 		.unwrap_or_else(|| std::process::exit(1));
@@ -41,10 +41,9 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.validate_with({
 			let mut force = None;
 			// type + `: `
-			let change_type_len =
-				String::from(&config.change_types[change_type_selection]).len() + 2;
+			let change_type_len = &config.change_types.items[change_type_selection].len() + 2;
 			// scope + `()`
-			let scope_len = String::from(config.scopes.get(scope_selection).unwrap()).len() + 2;
+			let scope_len = config.scopes.items.get(scope_selection).unwrap().len() + 2;
 			let max_input_length = if scope_selection != 0 {
 				50 - change_type_len - scope_len
 			} else {
@@ -93,8 +92,8 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs> {
 		.interact_text()
 		.context("Failed to ask for ticket")?;
 	Ok(Inputs {
-		change_type: String::from(&config.change_types[change_type_selection]),
-		scope: config.scopes.get(scope_selection).unwrap().to_owned(),
+		change_type: &config.change_types.items[change_type_selection],
+		scope: &config.scopes.items[scope_selection],
 		description,
 		long_description,
 		breaking_changes,
