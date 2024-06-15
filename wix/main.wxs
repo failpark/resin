@@ -62,7 +62,7 @@
         Id='*'
         Name='resin'
         UpgradeCode='69FFEEDD-002B-4F4F-9D8F-1375731D80D7'
-        Manufacturer='Internal: Daniel Matthes; Original: Matt Gleich'
+        Manufacturer='Internal: Daniel Borgs; Original: Matt Gleich'
         Language='1033'
         Codepage='1252'
         Version='$(var.Version)'>
@@ -70,7 +70,7 @@
         <Package Id='*'
             Keywords='Installer'
             Description='Superfast CLI for the conventional commits commit format'
-            Manufacturer='Internal: Daniel Matthes; Original: Matt Gleich'
+            Manufacturer='Internal: Daniel Borgs; Original: Matt Gleich'
             InstallerVersion='450'
             Languages='1033'
             Compressed='yes'
@@ -173,7 +173,7 @@
         <!--<Icon Id='ProductICO' SourceFile='wix\Product.ico'/>-->
         <!--<Property Id='ARPPRODUCTICON' Value='ProductICO' />-->
 
-        <Property Id='ARPHELPLINK' Value='https://github.com/MM-Learning-Solutions-AG/resin/'/>
+        <Property Id='ARPHELPLINK' Value='https://github.com/failpark/resin/'/>
         
         <UI>
             <UIRef Id='WixUI_FeatureTree'/>

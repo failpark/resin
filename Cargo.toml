@@ -3,11 +3,11 @@ name = "resin"
 version = "1.6.7"
 description = "Superfast CLI for the conventional commits commit format"
 authors = [
-	"Internal: Daniel Matthes <dmatthes@multamedio.de>",
+	"Internal: Daniel Borgs <daniel.borgs@noxa.de.de>",
 	"Original: Matt Gleich <email@mattglei.ch>",
 ]
-repository = "https://github.com/MM-Learning-Solutions-AG/resin"
-homepage = "https://github.com/MM-Learning-Solutions-AG/resin/"
+repository = "https://github.com/failpark/resin"
+homepage = "https://github.com/failpark/resin/"
 license = "MPL-2.0"
 edition = "2021"
 keywords = ["cli", "commit", "git", "standardization"]
