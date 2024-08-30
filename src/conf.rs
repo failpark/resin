@@ -53,7 +53,7 @@ impl Default for Config {
 		Self {
 			change_types: ItemConfig {
 				items: to_string_vec(vec!["feat", "fix", "docs", "style", "refactor", "chore"]),
-				capitalize: true,
+				capitalize: false,
 				ignore: vec![],
 			},
 			scopes: ItemConfig {
