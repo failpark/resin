@@ -17,3 +17,7 @@ pr-run-mode = "plan"
 install-updater = true
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
+# A GitHub repo to push Homebrew formulas to
+tap = "failpark/homebrew-tap"
+# Publish jobs to run in CI
+publish-jobs = ["homebrew"]
