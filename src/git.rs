@@ -1,221 +1,227 @@
-use std::fs;
-use std::path::Path;
-use std::process::{exit, Command, ExitStatus};
+use std::{
+	path::Path,
+	process::exit,
+};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::Result;
 use clap::ArgMatches;
-use configparser::ini::Ini;
-use directories::UserDirs;
+use git2::{
+	Commit,
+	Diff,
+	Index,
+	IndexAddOption,
+	Oid,
+	Reference,
+	Repository,
+	Signature,
+	Tree,
+};
 
-use crate::conf::Config;
-use crate::inputs::Inputs;
-use crate::utils::{output_failure, output_success};
+use super::utils::fail;
+use crate::{
+	conf::Config,
+	inputs::{
+		ask_for_path,
+		prompt_for_path,
+		Inputs,
+	},
+	utils::{
+		output_info,
+		output_success,
+	},
+};
+
+pub fn get_repo() -> Repository {
+	let repo = Repository::open_from_env();
+	if let Err(ref e) = repo {
+		fail(e);
+	}
+	repo.unwrap()
+}
 
 pub fn commit_changes(conf: &Config, args: &ArgMatches, inputs: &Inputs) -> Result<()> {
-	let git_program = "git";
-	println!();
-	if args.is_present("all") {
-		let status = Command::new(git_program)
-			.args(["add", "--verbose", "."])
-			.status()
-			.context("Failed to stage all changes")?;
-		check_status(status, "stage all changes");
-		output_success("Staged all changes\n");
-	}
-
-	let status = Command::new(git_program)
-		.args(["commit", "-m", &message(conf, inputs)?])
-		.status()
-		.context("Failed to commit changes")?;
-	check_status(status, "commit changes");
-	output_success("Committed changes");
-
-	if args.is_present("push") {
-		println!();
-		let status = Command::new(git_program)
-			.args(["push"])
-			.status()
-			.context("Failed to push changes")?;
-		check_status(status, "push changes");
-		output_success("Pushed changes");
-	}
+	let repo = get_repo();
+	if args.get_one::<bool>("all").is_some() {
+		add_all(&mut get_index(&repo));
+	} else {
+		check_emptiness(&repo)
+	};
+	let signoff = if conf.get_sign() {
+		format_signoff(&get_signatures(&repo)).unwrap_or_default()
+	} else {
+		String::new()
+	};
+	commit(&repo, &gen_commit_msg(inputs, signoff));
 	Ok(())
 }
 
-fn check_status(status: ExitStatus, task: &str) {
-	if !status.success() {
-		output_failure(
-			format!(
-				"Failed to {}. Try running the command manually and resolving the error",
-				task
-			)
-			.as_str(),
-		);
-		exit(1);
+// Im handling the err ... don't know why rustc complains
+#[allow(unused_must_use)]
+fn add(index: &mut Index, path: &Path) {
+	index
+		.add_all(path, IndexAddOption::DEFAULT, None)
+		.map_err(fail);
+	index.write().map_err(fail);
+}
+
+// Im handling the err ... don't know why rustc complains
+#[allow(unused_must_use)]
+fn add_all(index: &mut Index) {
+	index
+		.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)
+		.map_err(fail);
+	index.write().map_err(fail);
+}
+
+/// Check if there are is anything in staging
+/// if not we should offer to specify a path or exit
+pub fn check_emptiness(repo: &Repository) {
+	let mut index = get_index(repo);
+	let err_msg = "Your staging area is empty";
+	if is_empty(repo) {
+		output_info(err_msg);
+		if !ask_for_path() {
+			exit(0)
+		}
+		let path = prompt_for_path();
+		add(&mut index, path.as_path());
+		// if the index is still empty... just fail
+		if is_empty(repo) {
+			fail(err_msg)
+		}
 	}
 }
 
-fn message(conf: &Config, inputs: &Inputs) -> Result<String> {
-	let fmt_scope = format!("({})", inputs.scope);
-	let message = format!(
-		"{}{}{}: {}
-{}
-{}
+fn get_head_tree(repo: &Repository) -> Tree {
+	let head = get_head(repo).peel_to_tree();
+	if let Err(ref e) = head {
+		fail(e);
+	}
+	head.unwrap()
+}
 
-{}
+fn is_empty(repo: &Repository) -> bool {
+	get_diff(repo).deltas().len() == 0
+}
 
-{}",
-		inputs.change_type,
-		if inputs.scope == "none" {
-			""
-		} else {
-			&fmt_scope
-		},
-		if inputs.breaking_changes.is_empty() {
-			""
-		} else {
-			"!"
-		},
-		inputs.description,
-		inputs.ticket,
-		inputs.long_description,
-		inputs.breaking_changes,
-		if conf.sign { signoff()? } else { String::new() },
+fn get_diff(repo: &Repository) -> Diff {
+	let head = get_head_tree(repo);
+	let diff = repo.diff_tree_to_index(Some(&head), None, None);
+	if let Err(ref e) = diff {
+		fail(e);
+	}
+	diff.unwrap()
+}
+
+fn get_index(repo: &Repository) -> Index {
+	let index = repo.index();
+	if let Err(ref e) = index {
+		fail(e);
+	}
+	index.unwrap()
+}
+
+fn get_signatures(repo: &Repository) -> Signature {
+	let sig = repo.signature();
+	if let Err(ref e) = sig {
+		fail(e);
+	}
+	sig.unwrap()
+}
+
+fn get_head(repo: &Repository) -> Reference {
+	let head = repo.head();
+	if let Err(ref e) = head {
+		fail(e);
+	}
+	head.unwrap()
+}
+
+fn get_commit<'a>(ref_: &'a Reference<'a>) -> Commit<'a> {
+	let commit = ref_.peel_to_commit();
+	if let Err(ref e) = commit {
+		fail(e);
+	}
+	commit.unwrap()
+}
+
+fn get_tree(repo: &Repository, oid: Oid) -> Tree {
+	let tree = repo.find_tree(oid);
+	if let Err(ref e) = tree {
+		fail(e);
+	}
+	tree.unwrap()
+}
+
+fn write_changes(index: &mut Index) -> Oid {
+	let res = index.write_tree();
+	if let Err(ref e) = res {
+		fail(e);
+	}
+	res.unwrap()
+}
+
+fn commit(repo: &Repository, message: &str) {
+	let sig = get_signatures(repo);
+	let head = get_head(repo);
+	let parent = get_commit(&head);
+	let mut index = get_index(repo);
+	let oid = write_changes(&mut index);
+	let tree = get_tree(repo, oid);
+	let res = repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent]);
+	// TODO: sign commit
+	match res {
+		Err(e) => fail(e),
+		Ok(_) => output_success("Committed changes"),
+	}
+}
+
+pub fn get_branch_name(repo: &Repository) -> Option<String> {
+	let branch = get_head(repo);
+	branch.name().map(|val| val.into())
+}
+
+fn format_scope(scope: &Option<&str>) -> String {
+	match scope {
+		None => String::new(),
+		Some(scope) => format!("({scope})"),
+	}
+}
+
+fn gen_commit_msg(inputs: &Inputs, signoff: String) -> String {
+	let Inputs {
+		change_type,
+		scope,
+		description,
+		long_description,
+		breaking_changes,
+		ticket,
+	} = inputs;
+	let scope = format_scope(scope);
+	let exclamation = if breaking_changes.is_empty() { "" } else { "!" };
+	let ticket = if !ticket.is_empty() {
+		ticket.to_owned() + "\n"
+	} else {
+		ticket.to_owned()
+	};
+
+	format!(
+		"{change_type}{scope}{exclamation}: {description}
+{ticket}{long_description}\n
+{breaking_changes}\n
+{signoff}"
 	)
-	.trim()
-	.to_string();
-	Ok(message)
+	// breaking change and or signoff could be missing
+	.trim_end()
+	.into()
 }
 
-/// Create the sign off message based off the user's ~/.gitconfig
-fn signoff() -> Result<String> {
-	// Finding gitconfig
-	let raw_gitconfig_path = &format!(
-		"{}/.gitconfig",
-		UserDirs::new().unwrap().home_dir().display()
-	);
-	let gitconfig_path = Path::new(raw_gitconfig_path);
-
-	// Reading the values
-	if gitconfig_path.exists() {
-		let mut config = Ini::new();
-		config
-			.read(fs::read_to_string(gitconfig_path)?)
-			.map_err(|e| anyhow!("Failed to read from gitconfig file: {}", e))?;
-
-		let user_group = "user";
-		let name = config.get(user_group, "name").unwrap_or_default();
-		if name.is_empty() {
-			return Err(anyhow!(
-				"No value provided for name in the user section of your gitconfig"
-			));
-		}
-		let email = config.get(user_group, "email").unwrap_or_default();
-		if email.is_empty() {
-			return Err(anyhow!(
-				"No value provided for email in the user section of your gitconfig"
-			));
-		}
-		return Ok(format!("Signed-off-by: {} <{}>", name, email));
-	}
-	bail!("Failed ot find ~/.config for signoff message. Does it exist?")
-}
-/*
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_message() -> Result<()> {
-		// Simple message
-		assert_eq!(
-			message(
-				&Config {
-					scopes: vec![],
-					change_types: vec![],
-					sign: false
-				},
-				&Inputs {
-					change_type: String::from("feat"),
-					scope: String::from("none"),
-					description: String::from("add polish language"),
-					long_description: String::from(""),
-					breaking_changes: String::from(""),
-					ticket: String::new(),
-				}
-			)?,
-			String::from("feat: add polish language")
-		);
-		// With Scope
-		assert_eq!(
-			message(
-				&ConfigOld {
-					scopes: vec![],
-					change_types: vec![],
-					sign: false
-				},
-				&Inputs {
-					change_type: String::from("feat"),
-					scope: String::from("lang"),
-					description: String::from("add polish language"),
-					long_description: String::from(""),
-					breaking_changes: String::from(""),
-					ticket: String::new(),
-				}
-			)?,
-			String::from("feat(lang): add polish language")
-		);
-		// Long description
-		assert_eq!(
-			message(
-				&ConfigOld {
-					scopes: vec![],
-					change_types: vec![],
-					sign: false
-				},
-				&Inputs {
-					change_type: String::from("feat"),
-					scope: String::from("lang"),
-					description: String::from("add polish language"),
-					long_description: String::from(
-						"added this language because it is super cool and we need more languages \
-						 like it."
-					),
-					breaking_changes: String::from(""),
-					ticket: String::new(),
-				}
-			)?,
-			String::from(
-				"feat(lang): add polish language\n\nadded this language because it is super cool \
-				 and we need more languages like it."
-			)
-		);
-		// Breaking changes
-		assert_eq!(
-			message(
-				&Config {
-					scopes: vec![],
-					change_types: vec![],
-					sign: false
-				},
-				&Inputs {
-					change_type: String::from("feat"),
-					scope: String::from("lang"),
-					description: String::from("add polish language"),
-					long_description: String::from(
-						"added this language because it is super cool and we need more languages \
-						 like it."
-					),
-					breaking_changes: String::from("This breaks some other languages."),
-					ticket: String::new(),
-				}
-			)?,
-			String::from(
-				"feat(lang)!: add polish language\n\nadded this language because it is super cool \
-				 and we need more languages like it.\n\nThis breaks some other languages."
-			)
-		);
-		Ok(())
+fn format_signoff(signature: &Signature) -> Option<String> {
+	let name = signature.name();
+	let email = signature.email();
+	if let (Some(name), Some(email)) = (name, email) {
+		Some(format!("Signed-off-by: {name} <{email}>"))
+	} else {
+		None
 	}
 }
- */

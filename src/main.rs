@@ -12,7 +12,7 @@ fn main() {
 	.expect("Error setting ctrl+c handler");
 
 	let args = cli::setup().get_matches();
-	let config = conf::read().expect("Failed to read from configuration file");
+	let config = conf::Config::get().expect("Failed to read from configuration file");
 	let inputs = inputs::get_inputs(&config);
 	if let Ok(inputs) = inputs {
 		git::commit_changes(&config, &args, &inputs).expect("Failed to commit changes");
