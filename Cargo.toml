@@ -1,6 +1,6 @@
 [package]
 name = "resin"
-version = "1.6.8"
+version = "1.6.9"
 description = "Superfast CLI for the conventional commits commit format"
 authors = [
 	"Daniel Borgs <daniel.borgs@noxa.de.de>",
