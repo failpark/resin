@@ -73,7 +73,7 @@ impl Default for Config {
 }
 
 impl Config {
-	pub fn get_sign(&self) -> bool {
+	pub fn get_signoff(&self) -> bool {
 		self.sign
 	}
 

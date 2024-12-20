@@ -15,7 +15,7 @@ fn main() {
 	let config = conf::Config::get().expect("Failed to read from configuration file");
 	let inputs = inputs::get_inputs(&config);
 	if let Ok(inputs) = inputs {
-		git::commit_changes(&config, &args, &inputs).expect("Failed to commit changes");
+		git::commit_changes(config.get_signoff(), &args, &inputs).expect("Failed to commit changes");
 	} else {
 		let term = console::Term::stderr();
 		let _ = term.show_cursor();

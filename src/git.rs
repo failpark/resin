@@ -7,6 +7,7 @@ use anyhow::Result;
 use clap::ArgMatches;
 use git2::{
 	Commit,
+	Config,
 	Diff,
 	Index,
 	IndexAddOption,
@@ -19,7 +20,6 @@ use git2::{
 
 use super::utils::fail;
 use crate::{
-	conf::Config,
 	inputs::{
 		ask_for_path,
 		prompt_for_path,
@@ -39,14 +39,14 @@ pub fn get_repo() -> Repository {
 	repo.unwrap()
 }
 
-pub fn commit_changes(conf: &Config, args: &ArgMatches, inputs: &Inputs) -> Result<()> {
+pub fn commit_changes(signoff: bool, args: &ArgMatches, inputs: &Inputs) -> Result<()> {
 	let repo = get_repo();
 	if args.get_one::<bool>("all").is_some() {
 		add_all(&mut get_index(&repo));
 	} else {
 		check_emptiness(&repo)
 	};
-	let signoff = if conf.get_sign() {
+	let signoff = if signoff {
 		format_signoff(&get_signatures(&repo)).unwrap_or_default()
 	} else {
 		String::new()
@@ -161,19 +161,59 @@ fn write_changes(index: &mut Index) -> Oid {
 	res.unwrap()
 }
 
-fn commit(repo: &Repository, message: &str) {
-	let sig = get_signatures(repo);
-	let head = get_head(repo);
-	let parent = get_commit(&head);
-	let mut index = get_index(repo);
-	let oid = write_changes(&mut index);
-	let tree = get_tree(repo, oid);
-	let res = repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent]);
-	// TODO: sign commit
-	match res {
-		Err(e) => fail(e),
-		Ok(_) => output_success("Committed changes"),
+fn get_config(repo: &Repository) -> Config {
+	let config = repo.config();
+	if let Err(ref e) = config {
+		fail(e);
 	}
+	config.unwrap()
+}
+
+fn should_sign(config: &Config) -> bool {
+	let gpgsign = config.get_bool("commit.gpgsign");
+	if let Err(ref e) = gpgsign {
+		fail(e);
+	}
+	gpgsign.unwrap()
+}
+
+fn get_signature(config: &Config) {
+	let gpgsign = config.get_str("user.signingkey");
+}
+
+fn commit(_repo: &Repository, message: &str) {
+	// Ok I'll shell out because of signing for now
+	// and commit with the git command
+	// which'll do everything automagically ...
+	let status = std::process::Command::new("git")
+		.args(["commit", "-m", message])
+		.status();
+	if status.is_err() || status.is_ok_and(|x| !x.success()) {
+		fail("failed to commit changes");
+	}
+	output_success("Committed changes");
+
+	// to actually implement this without calling any cli command i'll have to
+	// - use commit_create_buffer to generate the commit object __WITHOUT__ writing it to the object db
+	// - convert the buff to a string
+	// - if commit.gpg = true
+	// - find user.signingkey
+	// - decide if gpg.format is unset or gpg then gpg otherwise ssh (x.509 is another bag of worms...)
+	// - sign that string with SshSig.sign in the ssh_key crate
+	// - sign that string with <something something pgp>
+
+	// let sig = get_signatures(repo);
+	// let head = get_head(repo);
+	// let parent = get_commit(&head);
+	// let mut index = get_index(repo);
+	// let oid = write_changes(&mut index);
+	// let tree = get_tree(repo, oid);
+	// let res = repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent]);
+	// TODO: sign commit
+	// match res {
+	// Err(e) => fail(e),
+	// Ok(_) => output_success("Committed changes"),
+	// }
 }
 
 pub fn get_branch_name(repo: &Repository) -> Option<String> {
