@@ -2,7 +2,7 @@
 members = ["cargo:."]
 
 [dist.dependencies.homebrew]
-openssl = { version = 3 }
+openssl = "3"
 [dist.dependencies.apt]
 pkg-config = "*"
 libssl-dev = "*"
