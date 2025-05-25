@@ -34,7 +34,7 @@ use crate::{
 
 pub struct Inputs<'a> {
 	pub change_type: &'a str,
-	pub scope: Option<&'a str>,
+	pub scope: Option<String>,
 	pub description: String,
 	pub long_description: String,
 	pub breaking_changes: String,
@@ -58,11 +58,9 @@ pub fn get_inputs(config: &conf::Config) -> Result<Inputs<'_>> {
 	let type_: &str = config.get_type_items().get(type_selection).unwrap();
 	let scope = ask_for_scope(theme)?;
 	let scope = if scope {
-		let scope = config
-			.get_scope_items()
-			.get(get_for_scope(theme, config.get_scope_items())?)
-			.unwrap();
-		(Some(scope.as_str()), scope.len())
+		let scope = get_for_scope(theme)?;
+		let len = scope.len();
+		(Some(scope), len)
 	} else {
 		(None, 0)
 	};
@@ -105,12 +103,10 @@ fn ask_for_scope(theme: &ColorfulTheme) -> Result<bool, anyhow::Error> {
 		.context("Failed to ask for longer description")
 }
 
-fn get_for_scope(theme: &ColorfulTheme, items: &[String]) -> Result<usize, anyhow::Error> {
-	FuzzySelect::with_theme(theme)
+fn get_for_scope(theme: &ColorfulTheme) -> Result<String, anyhow::Error> {
+	Input::with_theme(theme)
 		.with_prompt("Scope")
-		.default(0)
-		.items(items)
-		.interact()
+		.interact_text()
 		.context("Failed to present scope selection to user")
 }
 
@@ -138,7 +134,7 @@ fn ask_for_desc(theme: &ColorfulTheme, max_input_length: usize) -> Result<String
 
 			move |input: &String| -> Result<(), String> {
 				let input_len = input.len();
-				if (input_len) <= max_input_length || force.as_ref().map_or(false, |old| old == input) {
+				if (input_len) <= max_input_length || (force.as_ref() == Some(input)) {
 					Ok(())
 				} else {
 					force = Some(input.clone());

@@ -14,7 +14,7 @@ pub enum Scope {
 	release,
 	dev,
 	api,
-	regression
+	regression,
 }
 
 impl Scope {

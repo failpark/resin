@@ -221,7 +221,7 @@ pub fn get_branch_name(repo: &Repository) -> Option<String> {
 	branch.name().map(|val| val.into())
 }
 
-fn format_scope(scope: &Option<&str>) -> String {
+fn format_scope(scope: &Option<String>) -> String {
 	match scope {
 		None => String::new(),
 		Some(scope) => format!("({scope})"),
